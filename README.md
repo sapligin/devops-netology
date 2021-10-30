@@ -12,3 +12,4 @@ override.tf.json - исключает в папке .terraform файл override
 *_override.tf.json - исключает в папке .terraform с любым количеством символов в начале названия, но содержащих в конце _override.tf.json
 .terraformrc - исключает в папке .terraform файл .terraformrc
 terraform.rc - исключает в папке .terraform файл terraform.rc
+еще одна новая строка
