@@ -70,3 +70,94 @@ Apache2 установлен, сертификат сгенерирован, т�
     Done 2021-12-19 14:26:44 [  43s] -->> 140.82.121.4:443 (github.com) <<--
 #### 5. Установите на Ubuntu ssh сервер, сгенерируйте новый приватный ключ. Скопируйте свой публичный ключ на другой сервер. Подключитесь к серверу по SSH-ключу.
 #### Решение:
+Установил ssh сервер командами 
+
+    apt install openssh-server
+    systemctl start sshd.service
+    systemctl enable ssh.service
+Сгенерировал приватный ключ командой `ssh-keygen`.  
+Поднял еще одну виртуальную машину с Ubuntu и настроил сетевые интерфейсы двух машин в одну подсеть `172.26.1.0/24`.  
+Успешно скопировал ssh ключ на вторую ВМ. При копировании ключа запрашивался пароль для подлючения к ВМ  
+
+    vagrant@vagrant:~$ ssh-copy-id vagrant@172.26.1.3
+    /usr/bin/ssh-copy-id: INFO: Source of key(s) to be installed: "/home/vagrant/.ssh/id_rsa.pub"
+    The authenticity of host '172.26.1.3 (172.26.1.3)' can't be established.
+    ECDSA key fingerprint is SHA256:wSHl+h4vAtTT7mbkj2lbGyxWXWTUf6VUliwpncjwLPM.
+    Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+    /usr/bin/ssh-copy-id: INFO: attempting to log in with the new key(s), to filter out any that are already installed
+    /usr/bin/ssh-copy-id: INFO: 1 key(s) remain to be installed -- if you are prompted now it is to install the new keys
+    vagrant@172.26.1.3's password:
+    
+    Number of key(s) added: 1
+    
+    Now try logging into the machine, with:   "ssh 'vagrant@172.26.1.3'"
+    and check to make sure that only the key(s) you wanted were added.
+
+При подключении к ВМ по ssh ключу пароль не запрашивается и авторизация происходит автоматически  
+
+    vagrant@vagrant:~$ ssh vagrant@172.26.1.3
+    Welcome to Ubuntu 20.04.3 LTS (GNU/Linux 5.4.0-80-generic x86_64)
+
+     * Documentation:  https://help.ubuntu.com
+     * Management:     https://landscape.canonical.com
+     * Support:        https://ubuntu.com/advantage
+    
+      System information as of Tue 21 Dec 2021 10:36:29 AM UTC
+    
+      System load:  0.0               Processes:             119
+      Usage of /:   2.8% of 61.31GB   Users logged in:       1
+      Memory usage: 24%               IPv4 address for eth0: 10.0.2.15
+      Swap usage:   0%                IPv4 address for eth1: 172.26.1.3
+    
+    
+    This system is built by the Bento project by Chef Software
+    More information can be found at https://github.com/chef/bento
+    Last login: Tue Dec 21 10:04:02 2021 from 10.0.2.2
+#### 6. Переименуйте файлы ключей из задания 5. Настройте файл конфигурации SSH клиента, так чтобы вход на удаленный сервер осуществлялся по имени сервера.
+#### Решение:
+Файлы ssh ключа переименованы. Создан ssh config файл:  
+
+    vagrant@vagrant:~$ cat .ssh/config
+    Host remote_server
+    HostName 172.26.1.3
+    IdentityFile ~/.ssh/pligin_rsa
+    User vagrant
+
+Так как настроенного DNS сервера в сети нет, то чтобы сопоставить имя ВМ по ее IP адресу, нужно внести соответствующуу запись в `/etc/hosts/`  
+
+    vagrant@vagrant:~$ sudo cat /etc/hosts
+    127.0.0.1       localhost
+    127.0.1.1       vagrant.vm      vagrant
+    172.26.1.3      remote_server
+В результате удалось зайти на удаленную ВМ по имени:  
+
+    vagrant@vagrant:~$ ssh remote_server
+    Welcome to Ubuntu 20.04.3 LTS (GNU/Linux 5.4.0-80-generic x86_64)
+
+     * Documentation:  https://help.ubuntu.com
+     * Management:     https://landscape.canonical.com
+     * Support:        https://ubuntu.com/advantage
+
+    System information as of Tue 21 Dec 2021 12:49:27 PM UTC
+
+    System load:  0.0               Processes:             114
+    Usage of /:   2.8% of 61.31GB   Users logged in:       1
+    Memory usage: 19%               IPv4 address for eth0: 10.0.2.15
+    Swap usage:   0%                IPv4 address for eth1: 172.26.1.3
+
+
+    This system is built by the Bento project by Chef Software
+    More information can be found at https://github.com/chef/bento
+    Last login: Tue Dec 21 10:36:30 2021 from 172.26.1.4
+#### 7. Соберите дамп трафика утилитой tcpdump в формате pcap, 100 пакетов. Откройте файл pcap в Wireshark.
+#### Решение:
+Устанавливаем tcpdump командой `apt install tcpdump`  
+Командой `tcpdump -i any -c 100 -w file.pcap` собираем дамп, где `-i any` - все доступные сетевые интерфейсы, `-c 100` - количество пакетов, `-r file.pcap` - захват пакетов в pcap файл  
+
+      vagrant@vagrant:~$ sudo tcpdump -i any -c 100 -w file.pcap
+      tcpdump: listening on any, link-type LINUX_SLL (Linux cooked v1), capture size 262144 bytes
+      100 packets captured
+      107 packets received by filter
+      0 packets dropped by kernel
+С помощью программы WinSCP копирую файл в хост с Windows и открываю файл в Wireshark  
+![](IMG/4.PNG) 
