@@ -78,11 +78,11 @@ pligin@ubuntu:~/netology/sysadm-homeworks$
 #!/usr/bin/env python3
 
 import os
-import sys
-from os import path
-file_path = sys.argv[1]
+import sys # необходим для работы параметра argv()
+from os import path # необходим для работы с путями
+file_path = sys.argv[1] # sys.argv[1] - это параметр, переданный скрипту при запуске
 bash_command = ["cd " + file_path, "git status"]
-git_dir = path.isdir(file_path+".git")
+git_dir = path.isdir(file_path+".git") # проверяю наличие папки .git. Если есть, тогда:
 if git_dir:
     result_os = os.popen(' && '.join(bash_command)).read()
     is_change = False
@@ -90,7 +90,7 @@ if git_dir:
         if result.find('modified') != -1:
             prepare_result = result.replace('\tmodified:   ', '')
             print(file_path+prepare_result)
-else:
+else: # если папки .git нет, то:
     print("Путь не является репозиторием")
     exit()
 ```
@@ -116,24 +116,22 @@ pligin@ubuntu:~$
 
 ### Ваш скрипт:
 ```python
-???
+#!/usr/bin/env python3
+import socket # Необходим для работы с сокетами. Метод gethostbyname() преобразует имя хоста в формат адреса IPv4
+hosts = {"drive.google.com":"173.194.73.194", "mail.google.com":"64.233.164.19", "google.com":"64.233.161.102"}
+for host, ip in hosts.items():
+    if ip != socket.gethostbyname(host):
+        host_ip = socket.gethostbyname(host)
+        print(f"[ERROR] {host} IP mismatch: {ip} {host_ip}")
+    else:
+        print(f"{host} - {ip}")
 ```
 
 ### Вывод скрипта при запуске при тестировании:
 ```
-???
-```
-
-## Дополнительное задание (со звездочкой*) - необязательно к выполнению
-
-Так получилось, что мы очень часто вносим правки в конфигурацию своей системы прямо на сервере. Но так как вся наша команда разработки держит файлы конфигурации в github и пользуется gitflow, то нам приходится каждый раз переносить архив с нашими изменениями с сервера на наш локальный компьютер, формировать новую ветку, коммитить в неё изменения, создавать pull request (PR) и только после выполнения Merge мы наконец можем официально подтвердить, что новая конфигурация применена. Мы хотим максимально автоматизировать всю цепочку действий. Для этого нам нужно написать скрипт, который будет в директории с локальным репозиторием обращаться по API к github, создавать PR для вливания текущей выбранной ветки в master с сообщением, которое мы вписываем в первый параметр при обращении к py-файлу (сообщение не может быть пустым). При желании, можно добавить к указанному функционалу создание новой ветки, commit и push в неё изменений конфигурации. С директорией локального репозитория можно делать всё, что угодно. Также, принимаем во внимание, что Merge Conflict у нас отсутствуют и их точно не будет при push, как в свою ветку, так и при слиянии в master. Важно получить конечный результат с созданным PR, в котором применяются наши изменения. 
-
-### Ваш скрипт:
-```python
-???
-```
-
-### Вывод скрипта при запуске при тестировании:
-```
-???
+pligin@ubuntu:~$ python3 hostip.py 
+drive.google.com - 173.194.73.194
+[ERROR] mail.google.com IP mismatch: 64.233.164.19 173.194.222.19
+google.com - 64.233.161.102
+pligin@ubuntu:~$ 
 ```
