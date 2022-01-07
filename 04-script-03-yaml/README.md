@@ -46,38 +46,67 @@
 
 ### Ваш скрипт:
 ```python
-???
+#!/usr/bin/env python3
+
+import socket  # модуль нужен для работы с сокетами
+import time  # модуль нужен для отсчета времени
+import yaml  # модуль нужен для работы с файлами yaml
+import json  # модуль нужен для работы с файлами json
+
+hosts_names = ["drive.google.com", "mail.google.com", "google.com"]  # создаю список названий хостов
+hosts_ip = {}  # создаю пустой первый словарь
+for host in hosts_names:  # для каждого имени хоста в первый раз...
+    # ip = socket.gethostbyname(host)
+    hosts_ip[host] = socket.gethostbyname(host)  # ...сопоставляю  имя хоста и его IP адрес, записываю в словарь
+
+while True:  # делаю бесконечный цикл
+    new_hosts = hosts_ip.copy()  # копирую в новый словарь имя хоста и его IP адрес для дальнейшего сравнения
+    for host, ip in hosts_ip.items():  # для первого словаря проверяю...
+        # ip = socket.gethostbyname(host)
+        new_hosts[host] = socket.gethostbyname(host)  # ... запрашиваю во втором словаре, не изменился ли IP у хоста?
+        # print(new_hosts[ip])
+        if new_hosts[host] == ip:  # если не изменился, то...
+            print(host + ' - ' + ip)  # ... вывожу соответствующее сообщение
+        else:  # иначе...
+            print("[ERROR] " + host + " IP mismatch: " + ip + " " + new_hosts[host])  # ...вывожу другое сообщение
+            hosts_ip[host] = new_hosts[host]  # ...и перезаписываю первый словарь новыми данными
+
+    json_data = open("json_data.json", "w")  # открываю на запись файл json
+    yaml_data = open("yaml_data.yaml", "w")  # открываю на запись файл yaml
+    for host, ip in new_hosts.items():  # для вывода каждого хоста и IP адреса согласно шаблону задания
+        new_hosts = {host: ip}  # приведу каждую запись к такому виду
+        json.dump(new_hosts, json_data)  # записываю новые данные в файл json в формате { "имя сервиса" : "его IP"}
+        yaml.dump([new_hosts], yaml_data)  # записываю новые данные в файл yaml в формате - имя сервиса: его IP
+    json_data.close()  # закрываю файл json
+    yaml_data.close()  # закрываю файл yaml
+    time.sleep(5)  # торможу работу скрипта на 5 секунд
 ```
 
 ### Вывод скрипта при запуске при тестировании:
 ```
-???
+C:\Users\GreyPaw\AppData\Local\Programs\Python\Python310\python.exe C:/Users/GreyPaw/Documents/script7.py
+drive.google.com - 142.250.150.194
+mail.google.com - 74.125.205.19
+google.com - 74.125.131.102
+drive.google.com - 142.250.150.194
+[ERROR] mail.google.com IP mismatch: 74.125.205.19 74.125.205.83
+[ERROR] google.com IP mismatch: 74.125.131.102 74.125.131.113
+Traceback (most recent call last):
+  File "C:\Users\GreyPaw\Documents\script7.py", line 34, in <module>
+    time.sleep(5)  # торможу работу скрипта на 5 секунд
+KeyboardInterrupt
+
+Process finished with exit code -1073741510 (0xC000013A: interrupted by Ctrl+C)
 ```
 
 ### json-файл(ы), который(е) записал ваш скрипт:
 ```json
-???
+{"drive.google.com": "142.250.150.194"}{"mail.google.com": "74.125.205.83"}{"google.com": "74.125.131.113"}
 ```
 
 ### yml-файл(ы), который(е) записал ваш скрипт:
 ```yaml
-???
+- drive.google.com: 142.250.150.194
+- mail.google.com: 74.125.205.83
+- google.com: 74.125.131.113
 ```
-
-## Дополнительное задание (со звездочкой*) - необязательно к выполнению
-
-Так как команды в нашей компании никак не могут прийти к единому мнению о том, какой формат разметки данных использовать: JSON или YAML, нам нужно реализовать парсер из одного формата в другой. Он должен уметь:
-   * Принимать на вход имя файла
-   * Проверять формат исходного файла. Если файл не json или yml - скрипт должен остановить свою работу
-   * Распознавать какой формат данных в файле. Считается, что файлы *.json и *.yml могут быть перепутаны
-   * Перекодировать данные из исходного формата во второй доступный (из JSON в YAML, из YAML в JSON)
-   * При обнаружении ошибки в исходном файле - указать в стандартном выводе строку с ошибкой синтаксиса и её номер
-   * Полученный файл должен иметь имя исходного файла, разница в наименовании обеспечивается разницей расширения файлов
-
-### Ваш скрипт:
-```python
-???
-```
-
-### Пример работы скрипта:
-???
