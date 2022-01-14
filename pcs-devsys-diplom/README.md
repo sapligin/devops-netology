@@ -263,6 +263,8 @@ sudo mv test.example.com.crt /etc/ssl/
 sudo mv test.example.com.key /etc/ssl/
 sudo systemctl restart nginx
 ```
+Вывод статуса сертификата после генерации скриптом
+![](1.PNG) 
 Crontab работает, сертификат генерируется по расписанию.
 Настройка задания crontab. Указано 00:00 28 числа каждого месяца.
 ```
