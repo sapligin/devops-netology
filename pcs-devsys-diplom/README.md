@@ -263,12 +263,12 @@ sudo mv test.example.com.crt /etc/ssl/
 sudo mv test.example.com.key /etc/ssl/
 sudo systemctl restart nginx
 ```
-Crontab работает  
-Настройка задания crontab
+Crontab работает, сертификат генерируется по расписанию.
+Настройка задания crontab. Указано 00:00 28 числа каждого месяца.
 ```
-* * * * * /home/vagrant/script.sh
+0 0 28 * * /home/vagrant/script.sh
 ```
-Вывод статуса работы crontab
+Вывод статуса работы crontab. Для того, чтобы cron отработал, в настройках поставил срабатывать заданию каждую минуту.
 ```
 vagrant@vagrant:~$ sudo service cron status
 ● cron.service - Regular background program processing daemon
