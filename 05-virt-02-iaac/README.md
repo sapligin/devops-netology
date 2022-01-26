@@ -17,4 +17,39 @@
 - Какой, на ваш взгляд, метод работы систем конфигурации более надёжный push или pull?
 
 ## Решение:
-- Ansible использует существующую SSH инфраструктуру, а в других системах 
+- Ansible использует существующую SSH инфраструктуру, а в других системах необходимо устанавливать отдельное PKI окружение. Простой язык написания сценариев. Легко расширить функционал при помощи подключаемых модулей.
+- Мне кажется, что метод push более надежный, так как позволяет строго контролировать конфигурации на серверах.
+
+## Задача 3
+Установить на личный компьютер:
+
+- VirtualBox
+- Vagrant
+- Ansible
+
+Приложить вывод команд установленных версий каждой из программ, оформленный в markdown.
+## Решение:
+VirtualBox
+```
+PS C:\Program Files\Oracle\VirtualBox> .\VBoxManage.exe -version
+6.1.30r148432
+```
+Vagrant
+```
+PS C:\vagrant> vagrant version
+Installed Version: 2.2.19
+Latest Version: 2.2.19
+
+You're running an up-to-date version of Vagrant!
+```
+Ansible
+```
+GreyPaw@DESKTOP-6IAGSHL ~
+$ ansible --version
+ansible 2.8.4
+  config file = /etc/ansible/ansible.cfg
+  configured module search path = ['/home/GreyPaw/.ansible/plugins/modules', '/usr/share/ansible/plugins/modules']
+  ansible python module location = /usr/lib/python3.7/site-packages/ansible
+  executable location = /usr/bin/ansible
+  python version = 3.7.12 (default, Nov 23 2021, 18:58:07) [GCC 11.2.0]
+```
