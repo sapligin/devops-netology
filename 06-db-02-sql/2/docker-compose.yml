@@ -1,0 +1,16 @@
+version: "3.9"
+services:
+  postgres:
+    image: postgres:12
+    environment:
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "postgres"
+      PGDATA: "/var/lib/postgresql/data/pgdata"
+    volumes:
+      - ../2. Init Database:/docker-entrypoint-initdb.d
+      - data-vol:/var/lib/postgresql/data/
+      - /var/lib/docker/volumes/06-db-02-sql_backup-vol:/backups
+    ports:
+      - "5432:5432"
+volumes:
+  data-vol: {}
