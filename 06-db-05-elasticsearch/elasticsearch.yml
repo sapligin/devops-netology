@@ -1,0 +1,4 @@
+node.name: netology_test
+path.data: /var/lib/elasticsearch/data/
+path.repo: /elasticsearch-8.1.2/snapshots/
+http.port: 9200
