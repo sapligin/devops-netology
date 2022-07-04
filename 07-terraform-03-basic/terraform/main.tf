@@ -11,8 +11,10 @@ terraform {
     bucket     = "tfbucket"
     region     = "ru-central1-a"
     key        = "tfbucket/terraform.tfstate"
-    access_key = "YCAJEHJHW-IugND6-yW9_zVhC"
-    secret_key = "YCOG_G8Dpt30fpygRRs8qxLhG1lhSJwDyLwD8h-p"
+    # access_key необходмо заменить на свои
+    access_key = "xxxxxxxxx-xxxxxx-xxxxxxxx"
+    # secret_key необходмо заменить на свои
+    secret_key = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 
     skip_region_validation      = true
     skip_credentials_validation = true
