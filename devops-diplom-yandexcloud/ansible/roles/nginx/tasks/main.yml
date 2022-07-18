@@ -1,0 +1,41 @@
+---
+- name: Установка Nginx
+  become: true
+  apt:
+    name: nginx
+    state: present
+    update_cache: yes
+
+- name: Меняем конфигурацию Nginx
+  become: true
+  template:
+    src: templates/nginx.conf.j2
+    dest: /etc/nginx/nginx.conf
+    mode: 0644
+
+- name: Создаем папку для certbot
+  become: true
+  file:
+    path: /var/www/html/.well-known/acme-challenge
+    state: directory
+    mode: 0755
+
+- name: Устанавливаем certbot
+  become: true
+  apt:
+    name:
+    - certbot
+    - python3-certbot-nginx
+
+- name: Запрашиваем сертификаты
+  become: yes
+  ansible.builtin.command: "certbot certonly --nginx --test-cert --agree-tos --no-eff-email -q --email sa.pligin@gmail.com -d sapligin.ru -d www.sapligin.ru"
+
+- name: Копируем конфиги nginx
+  become: yes
+  template:
+    src: "templates/{{ item }}.conf.j2"
+    dest: "/etc/nginx/conf.d/{{ item }}.conf"
+    mode: 0644
+  with_items: "{{ nginx_proxy_configs }}"
+  notify: Reload Nginx service
