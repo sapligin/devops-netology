@@ -1,0 +1,15 @@
+server {
+listen 443 ssl;
+server_name grafana.sapligin.ru;
+access_log /var/log/nginx/sapligin.ru.access.log main;
+index index.html index.htm;
+ssl on;
+ssl_certificate /etc/letsencrypt/live/sapligin.ru/fullchain.pem;
+ssl_certificate_key /etc/letsencrypt/live/sapligin.ru/privkey.pem;
+location / {
+    proxy_pass http://grafana.sapligin.ru:3000;
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Real-IP $remote_addr;
+    }
+}

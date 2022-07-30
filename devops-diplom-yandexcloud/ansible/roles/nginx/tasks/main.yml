@@ -38,4 +38,4 @@
     dest: "/etc/nginx/conf.d/{{ item }}.conf"
     mode: 0644
   with_items: "{{ nginx_proxy_configs }}"
-  notify: Reload Nginx service
+  notify: Запускаем Nginx
