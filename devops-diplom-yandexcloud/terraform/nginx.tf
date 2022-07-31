@@ -11,7 +11,7 @@ resource "yandex_compute_instance" "nginx" {
 
   boot_disk {
     initialize_params {
-      image_id    = "fd8qs44945ddtla09hnr"
+      image_id = "fd84mnpg35f7s7b0f5lg" // nat-instance-ubuntu-1804-lts
       type        = "network-ssd"
       size        = "10"
     }

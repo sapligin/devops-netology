@@ -27,15 +27,39 @@
     - certbot
     - python3-certbot-nginx
 
+- name: Копируем файл настроек certbot
+  become: true
+  ansible.builtin.copy:
+    src: files/cli.ini
+    dest: /etc/letsencrypt/cli.ini
+    mode: 0644
+
 - name: Запрашиваем сертификаты
-  become: yes
-  ansible.builtin.command: "certbot certonly --nginx --test-cert --agree-tos --no-eff-email -q --email sa.pligin@gmail.com -d sapligin.ru -d www.sapligin.ru"
+  become: true
+  ansible.builtin.command: "certbot certonly --test-cert --agree-tos --no-eff-email -q --email sa.pligin@gmail.com -d sapligin.ru -d www.sapligin.ru -d alertmanager.sapligin.ru -d gitlab.sapligin.ru -d grafana.sapligin.ru -d prometheus.sapligin.ru"
 
 - name: Копируем конфиги nginx
-  become: yes
+  become: true
   template:
     src: "templates/{{ item }}.conf.j2"
     dest: "/etc/nginx/conf.d/{{ item }}.conf"
     mode: 0644
   with_items: "{{ nginx_proxy_configs }}"
-  notify: Запускаем Nginx
+  notify: Перезапускаем Nginx
+
+#- name: Enable ip_forwarding
+#  become: true
+#  sysctl:
+#    name: net.ipv4.ip_forward
+#    value: '1'
+#    sysctl_set: yes
+#    state: present
+#    reload: yes
+#
+#- name: Enable masquerade NAT
+#  become: true
+#  iptables:
+#    table: nat
+#    chain: POSTROUTING
+#    out_interface: eth0
+#    jump: MASQUERADE

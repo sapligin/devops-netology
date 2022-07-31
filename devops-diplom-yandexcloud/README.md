@@ -340,3 +340,12 @@ Destroy complete! Resources: 3 destroyed.
 </details>
 
 ## 3. Установка Nginx и LetsEncrypt
+Написана роль для установки Nginx и LetsEncrypt.
+
+В доменной зоне настроены все A-записи на внешний адрес сервера c Nginx (51.250.12.153)
+
+![](IMG/dns.PNG)
+
+В браузере можно открыть любой URL и увидеть ответ сервера (502 Bad Gateway). Также certbot сгенерировал сертификат:
+
+![](IMG/site1.PNG)

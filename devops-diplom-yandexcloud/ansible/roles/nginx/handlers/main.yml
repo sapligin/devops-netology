@@ -4,7 +4,7 @@
   ansible.builtin.service:
     name: nginx
     state: started
-- name: Reload Nginx service
+- name: Перезапускаем Nginx
   become: yes
   ansible.builtin.service:
     name: nginx

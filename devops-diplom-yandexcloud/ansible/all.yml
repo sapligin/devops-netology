@@ -4,3 +4,8 @@
   remote_user: ubuntu
   roles:
     - nginx
+- name: Install MySQL
+  hosts: mysql-group
+  remote_user: ubuntu
+  roles:
+    - mysql
