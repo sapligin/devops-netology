@@ -16,55 +16,70 @@
     state: started
     enabled: yes
 
-- name: Find MySQL root password
-  become: yes
-  ansible.builtin.shell: "echo `grep 'temporary.*root@localhost' /var/log/mysqld.log | sed 's/.*root@localhost: //'`"
-  register: mysql_tmp_root_pass
-
-#Detect and properly set root password
-- name: Detect and properly set root password - master
-  block:
-  - name: Detect .my.cnf file
-    stat:
-      path: ~/.my.cnf
-    register: result
-  - name: File .my.cnf exists
+- name: update mysql root password for all root accounts
     mysql_user:
       name: root
-      password: "{{ mysql_root_pass }}"
-    when: result.stat.exists == true
-  - name: Set new password from temporary password
-    shell: 'mysql -e "SET PASSWORD = PASSWORD(''{{ mysql_root_pass }}'');" --connect-expired-password -uroot -p"{{ mysql_tmp_root_pass.stdout }}"'
-    when: result.stat.exists == false
-  become: true
+      host: "{{ item }}"
+      password: "{{ mysql_root_password }}"
+      login_user: root
+      login_password: "{{ mysql_root_password }}"
+      check_implicit_admin: yes
+      priv: "*.*:ALL,GRANT"
+    with_items:
+    - "{{ ansible_hostname }}"
+    - 127.0.0.1
+    - ::1
+    - localhost
 
-- name: Create .my.cnf
-  become: yes
-  template:
-   src: "templates/.my.cnf.j2"
-   dest: "~/.my.cnf"
-   owner: root
-   group: root
-   mode: 0600
-
-- name: creating mysql user (wordpress)
-  mysql_user:
-    name: "{{ db_user }}"
-    password: "{{ db_pass }}"
-    priv: '*.*:ALL'
-    host: '%'
-    state: present
-- name: creating wordpress db
-  mysql_db:
-    name: "{{ db_name }}"
-    state: present
-- name: Enable remote login to mysql
-  lineinfile:
-     path: /etc/mysql/mysql.conf.d/mysqld.cnf
-     regexp: '^bind-address'
-     line: 'bind-address = 0.0.0.0'
-     backup: yes
-  notify: Restart mysql
+#- name: Find MySQL root password
+#  become: yes
+#  ansible.builtin.shell: "echo `grep 'temporary.*root@localhost' /var/log/mysqld.log | sed 's/.*root@localhost: //'`"
+#  register: mysql_tmp_root_pass
+#
+##Detect and properly set root password
+#- name: Detect and properly set root password - master
+#  block:
+#  - name: Detect .my.cnf file
+#    stat:
+#      path: ~/.my.cnf
+#    register: result
+#  - name: File .my.cnf exists
+#    mysql_user:
+#      name: root
+#      password: "{{ mysql_root_pass }}"
+#    when: result.stat.exists == true
+#  - name: Set new password from temporary password
+#    shell: 'mysql -e "SET PASSWORD = PASSWORD(''{{ mysql_root_pass }}'');" --connect-expired-password -uroot -p"{{ mysql_tmp_root_pass.stdout }}"'
+#    when: result.stat.exists == false
+#  become: true
+#
+#- name: Create .my.cnf
+#  become: yes
+#  template:
+#   src: "templates/.my.cnf.j2"
+#   dest: "~/.my.cnf"
+#   owner: root
+#   group: root
+#   mode: 0600
+#
+#- name: creating mysql user (wordpress)
+#  mysql_user:
+#    name: "{{ db_user }}"
+#    password: "{{ db_pass }}"
+#    priv: '*.*:ALL'
+#    host: '%'
+#    state: present
+#- name: creating wordpress db
+#  mysql_db:
+#    name: "{{ db_name }}"
+#    state: present
+#- name: Enable remote login to mysql
+#  lineinfile:
+#     path: /etc/mysql/mysql.conf.d/mysqld.cnf
+#     regexp: '^bind-address'
+#     line: 'bind-address = 0.0.0.0'
+#     backup: yes
+#  notify: Restart mysql
 
 #- name: Скачиваем MySQL
 #  get_url:

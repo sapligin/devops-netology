@@ -4,6 +4,8 @@ mysql_dependencies:
   - mysql-client
   - python3-mysqldb
   - libmysqlclient-dev
+mysql_root_password:
+  - r00tPa$$w0rD
 db_user:
   - wordpress
 db_pass:
