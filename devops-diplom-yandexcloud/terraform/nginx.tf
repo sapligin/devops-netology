@@ -6,7 +6,12 @@ resource "yandex_compute_instance" "nginx" {
 
   resources {
     cores  = 2
+    core_fraction = 20
     memory = 2
+  }
+
+  scheduling_policy {
+    preemptible = true
   }
 
   boot_disk {

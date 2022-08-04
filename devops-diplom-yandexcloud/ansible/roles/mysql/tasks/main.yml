@@ -33,13 +33,36 @@
   - localhost
 
 - name: Create .my.cnf
-  become: yes
+  become: true
   template:
    src: "templates/.my.cnf.j2"
-   dest: "/root/.my.cnf"
-   owner: root
-   group: root
+   dest: "/home/ubuntu/.my.cnf"
+   owner: ubuntu
+   group: ubuntu
    mode: 0600
+
+- name: creating db
+  mysql_db:
+     name: "{{ db_name }}"
+     state: present
+
+- name: creating mysql user
+  mysql_user:
+     name: "{{ db_user }}"
+     password: "{{ db_pass }}"
+     priv: "{{ db_name }}.*:ALL"
+     host: '%'
+     state: present
+
+- name: Enable remote login to mysql
+  become: true
+  lineinfile:
+     path: /etc/mysql/mysql.conf.d/mysqld.cnf
+     regexp: '^bind-address'
+     line: 'bind-address = 0.0.0.0'
+     backup: yes
+  notify:
+    - Restart mysql
 #- name: Find MySQL root password
 #  become: yes
 #  ansible.builtin.shell: "echo `grep 'temporary.*root@localhost' /var/log/mysqld.log | sed 's/.*root@localhost: //'`"

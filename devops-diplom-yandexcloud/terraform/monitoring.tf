@@ -6,7 +6,12 @@ resource "yandex_compute_instance" "monitoring" {
 
   resources {
     cores  = 4
+    core_fraction = 20
     memory = 4
+  }
+
+  scheduling_policy {
+    preemptible = true
   }
 
   boot_disk {
