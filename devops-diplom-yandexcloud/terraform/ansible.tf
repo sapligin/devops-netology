@@ -8,7 +8,7 @@ resource "time_sleep" "waiting_for_provisioning" {
 
 resource "null_resource" "ansible_site" {
   provisioner "local-exec" {
-    command = "cd ../ansible && ANSIBLE_FORCE_COLOR=1 ansible-playbook -i inventory/inventory.yml all.yml -vvvv"
+    command = "cd ../ansible && ANSIBLE_FORCE_COLOR=1 ansible-playbook -i inventory/inventory.yml all.yml"
   }
 
   depends_on = [

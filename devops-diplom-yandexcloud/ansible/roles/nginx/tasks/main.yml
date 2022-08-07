@@ -24,19 +24,19 @@
   become: true
   apt:
     name:
-    - certbot
-    - python3-certbot-nginx
+      - certbot
+      - python3-certbot-nginx
 
 - name: Копируем файл настроек certbot
   become: true
-  ansible.builtin.copy:
+  copy:
     src: files/cli.ini
     dest: /etc/letsencrypt/cli.ini
     mode: 0644
 
 - name: Запрашиваем сертификаты
   become: true
-  ansible.builtin.command: "certbot certonly --test-cert --agree-tos --no-eff-email -q --email sa.pligin@gmail.com -d sapligin.ru -d www.sapligin.ru -d alertmanager.sapligin.ru -d gitlab.sapligin.ru -d grafana.sapligin.ru -d prometheus.sapligin.ru"
+  command: "certbot certonly --test-cert --agree-tos --no-eff-email -q --email sa.pligin@gmail.com -d sapligin.ru -d www.sapligin.ru -d alertmanager.sapligin.ru -d gitlab.sapligin.ru -d grafana.sapligin.ru -d prometheus.sapligin.ru"
 
 - name: Копируем конфиги nginx
   become: true

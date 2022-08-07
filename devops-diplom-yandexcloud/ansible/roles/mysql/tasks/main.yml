@@ -1,14 +1,14 @@
 ---
 - name: Installing Mysql and dependencies
   apt:
-   name: "{{ item }}"
-   state: present
-   update_cache: yes
+    name: "{{ item }}"
+    state: present
+    update_cache: yes
   loop:
-   - mysql-server
-   - mysql-client
-   - python3-mysqldb
-   - libmysqlclient-dev
+    - mysql-server
+    - mysql-client
+    - python3-mysqldb
+    - libmysqlclient-dev
   become: true
 - name: start and enable mysql service
   service:
@@ -16,55 +16,44 @@
     state: started
     enabled: yes
 
-- name: update mysql root password for all root accounts
-  become: true
-  mysql_user:
-    name: root
-    host: "{{ item }}"
-    password: "{{ mysql_root_password }}"
-    login_user: root
-    login_password: "{{ mysql_root_password }}"
-    check_implicit_admin: yes
-    priv: "*.*:ALL,GRANT"
-  with_items:
-  - "{{ ansible_hostname }}"
-  - 127.0.0.1
-  - ::1
-  - localhost
 
 - name: Create .my.cnf
   become: true
   template:
-   src: "templates/.my.cnf.j2"
-   dest: "/root/.my.cnf"
-   owner: root
-   group: root
-   mode: 0600
+    src: "templates/.my.cnf.j2"
+    dest: "/root/.my.cnf"
+    owner: root
+    group: root
+    mode: 0600
 
 - name: creating db
   become: true
   mysql_db:
-     name: "{{ db_name }}"
-     state: present
+    name: "{{ db_name }}"
+    state: present
 
 - name: creating mysql user
   become: true
   mysql_user:
-     name: "{{ db_user }}"
-     password: "{{ db_pass }}"
-     priv: "{{ db_name }}.*:ALL"
-     host: '%'
-     state: present
+    name: "{{ db_user }}"
+    password: "{{ db_pass }}"
+    priv: "{{ db_name }}.*:ALL"
+    host: '%'
+    state: present
 
 - name: Enable remote login to mysql
   become: true
   lineinfile:
-     path: /etc/mysql/mysql.conf.d/mysqld.cnf
-     regexp: '^bind-address'
-     line: 'bind-address = 0.0.0.0'
-     backup: yes
-  notify:
-    - Restart mysql
+    path: /etc/mysql/mysql.conf.d/mysqld.cnf
+    regexp: '^bind-address'
+    line: 'bind-address = 0.0.0.0'
+    backup: yes
+
+- name: Restart mysql
+  become: true
+  service:
+    name: mysql
+    state: restarted
 
 - name: Replace master.cnf
   become: true
@@ -75,8 +64,14 @@
     - mysql_replication_role == 'master'
     - mysql_replication_user is defined
     - (mysql_replication_master | length) > 0
-  notify:
-    - Restart mysql
+
+- name: Restart mysql
+  become: true
+  service:
+    name: mysql
+    state: restarted
+  when:
+    - mysql_replication_role == 'master'
 
 - name: Replace slave.cnf
   become: true
@@ -86,8 +81,14 @@
   when:
     - mysql_replication_role == 'slave'
     - (mysql_replication_master | length) > 0
-  notify:
-    - Restart mysql
+
+- name: Restart mysql
+  become: true
+  service:
+    name: mysql
+    state: restarted
+  when:
+    - mysql_replication_role == 'slave'
 
 - name: Ensure replication user exists on master.
   become: true
@@ -97,108 +98,58 @@
     password: "{{ mysql_replication_user_password }}"
     priv: "*.*:REPLICATION SLAVE,REPLICATION CLIENT"
     state: present
+  when: inventory_hostname == 'mysql-master'
+
+- name: Change the authentication plugin of MySQL root user to mysql_native_password
+  become: true
+  shell: mysql -e 'UPDATE mysql.user SET plugin="mysql_native_password"
+    WHERE user="{{ mysql_replication_user }}" AND host="%"'
+  when: inventory_hostname == 'mysql-master'
+- name: Flush Privileges
+  become: true
+  shell: mysql -e 'FLUSH PRIVILEGES'
+  when: inventory_hostname == 'mysql-master'
+
+- name: Restart mysql
+  become: true
+  service:
+    name: mysql
+    state: restarted
   when:
     - mysql_replication_role == 'master'
-    - mysql_replication_user is defined
-    - (mysql_replication_master | length) > 0
 
-- name: check slave replication status
+
+- name: Check slave replication status.
   become: true
-  community.mysql.mysql_replication:
-    mode: getreplica
+  mysql_replication:
+    mode: getslave
+  ignore_errors: true
   register: slave
-  when:
-    - mysql_replication_role == 'slave'
-    - (mysql_replication_master | length) > 0
+  when: inventory_hostname == 'mysql-slave'
 
-- name: check master replication status
+- name: Check master replication status.
   become: true
-  community.mysql.mysql_replication:
-    mode=getprimary
+  mysql_replication:
+    mode: getmaster
   delegate_to: "{{ mysql_replication_master }}"
   register: master
-  when:
-    - (slave.Is_Replica is defined and not slave.Is_Replica) or (slave.Is_Replica is not defined and slave is failed)
-    - mysql_replication_role == 'slave'
-    - (mysql_replication_master | length) > 0
+  when: inventory_hostname == 'mysql-slave'
 
-- name: stop replication
+
+- name: Configure replication on the slave.
   become: true
-  community.mysql.mysql_replication:
-    mode=stopreplica
-  when:
-    - (slave.Is_Replica is defined and not slave.Is_Replica) or (slave.Is_Replica is not defined and slave is failed)
-    - mysql_replication_role == 'slave'
-    - (mysql_replication_master | length) > 0
+  mysql_replication:
+    mode: changemaster
+    master_host: "{{ hostvars['mysql-master'].ansible_host }}"
+    master_user: "{{ mysql_replication_user }}"
+    master_password: "{{ mysql_replication_user_password }}"
+    master_log_file: "{{ master.File }}"
+    master_log_pos: "{{ master.Position }}"
+  ignore_errors: true
+  when: inventory_hostname == 'mysql-slave'
 
-- name: configure replication on the slave
+
+- name: Start replication.
+  mysql_replication: mode=startslave
+  when: inventory_hostname == 'mysql-slave'
   become: true
-  community.mysql.mysql_replication:
-    mode: changeprimary
-    primary_host: "{{ hostvars['mysql-master'].ansible_host }}"
-    primary_user: "{{ mysql_replication_user }}"
-    primary_password: "{{ mysql_replication_user_password }}"
-    primary_log_file: "{{ master.File }}"
-    primary_log_pos: "{{ master.Position }}"
-  when:
-    - (slave.Is_Replica is defined and not slave.Is_Replica) or (slave.Is_Replica is not defined and slave is failed)
-    - mysql_replication_role == 'slave'
-    - mysql_replication_user is defined
-    - (mysql_replication_master | length) > 0
-
-- name: start replication
-  become: true
-  community.mysql.mysql_replication:
-    mode=startreplica
-  when:
-    - (slave.Is_Replica is defined and not slave.Is_Replica) or (slave.Is_Replica is not defined and slave is failed)
-    - mysql_replication_role == 'slave'
-    - (mysql_replication_master | length) > 0
-
-#- name: Create replica user on master
-#  become: true
-#  mysql_user:
-#    name: "{{ mysql_replication_user }}"
-#    password: "{{ mysql_replication_user_password }}"
-#    host: "{{ hostvars['mysql-slave'].ansible_host }}"
-#    priv: "*.*:REPLICATION SLAVE,REPLICATION CLIENT"
-#    state: present
-#  when: inventory_hostname == 'mysql-master'
-#
-#- name: Copy Master template cnf
-#  become: true
-#  template:
-#    src: "templates/{{ inventory_hostname }}.cnf.j2"
-#    dest: /etc/my.cnf
-#    mode: 0644
-#    owner: root
-#    group: root
-#  notify: Restart mysql
-#- name: Flush handlers
-#  meta: flush_handlers
-#
-#- name: Get primary binlog file name and binlog position
-#  become: true
-#  mysql_replication:
-#    mode: getprimary
-#  register: primary_info
-#  when: inventory_hostname == 'mysql-master'
-#
-#- name: Set up replication on slave
-#  block:
-#  - name: Stop mysql replica thread
-#    mysql_replication:
-#      mode: stopreplica
-#  - name: Change primary server and use binary log with position
-#    mysql_replication:
-#      mode: changeprimary
-#      primary_user: "{{ mysql_replication_user }}"
-#      primary_password: "{{ mysql_replication_user_password }}"
-#      primary_host: "{{ hostvars['mysql-master'].ansible_host }}"
-#      primary_log_file: "{{ hostvars['mysql-master'].primary_info.File }}"
-#      primary_log_pos: "{{ hostvars['mysql-master'].primary_info.Position }}"
-#  - name: Start mysql replica thread
-#    mysql_replication:
-#      mode: startreplica
-#  when: inventory_hostname == 'mysql-slave'
-#  become: true
