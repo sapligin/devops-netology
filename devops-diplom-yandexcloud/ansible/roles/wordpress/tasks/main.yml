@@ -1,0 +1,115 @@
+---
+- name: Install prerequisites
+  become: true
+  package: name=aptitude update_cache=yes state=latest force_apt_get=yes
+
+#- name: Add the user for gitlab runner
+#  ansible.builtin.user:
+#    name: runner
+#
+#- name: Add runner user to sudoers
+#  user:
+#    name=runner
+#    groups=sudo
+#    append=yes
+#    state=present
+#
+#- name: Allow gitlab_runner user to have passwordless sudo
+#  lineinfile:
+#    dest: /etc/sudoers
+#    state: present
+#    regexp: '^runner'
+#    line: 'runner ALL=(ALL) NOPASSWD: ALL'
+#
+#- name: Create directory for runner authorized_keys
+#  file:
+#    name: /home/runner/.ssh/
+#    state: directory
+#
+#- name: Copy authorized_keys file
+#  template:
+#    src: templates/aut_keys
+#    dest: /home/runner/.ssh/
+
+- name: Install app packages
+  become: true
+  package:
+    name: "{{ item }}"
+    state: present
+    update_cache: yes
+  with_items:
+    - "{{ app_packages }}"
+
+- name: Install PHP Extensions
+  become: true
+  package:
+    name: "{{ item }}"
+    state: present
+    update_cache: yes
+  with_items:
+    - "{{ php_modules }}"
+
+- name: Create document root
+  become: true
+  file:
+    name: "/var/www/{{ http_host }}"
+    state: directory
+    owner: "www-data"
+    group: "www-data"
+    mode: '0755'
+
+- name: Set up Apache VirtualHost
+  become: true
+  template:
+    src: "templates/apache.conf.j2"
+    dest: "/etc/apache2/sites-available/{{ http_host }}.conf"
+
+- name: Enable rewrite module
+  become: true
+  shell: /usr/sbin/a2enmod rewrite
+
+- name: Enable new site
+  become: true
+  shell: /usr/sbin/a2ensite {{ http_host }}.conf
+
+- name: Disable default Apache site
+  become: true
+  shell: /usr/sbin/a2dissite 000-default.conf
+
+- name: "restart apache"
+  become: true
+  service:
+      name: apache2
+      state: restarted
+
+- name: Download and unpack latest WordPress
+  become: true
+  unarchive:
+    src: https://wordpress.org/latest.tar.gz
+    dest: "/var/www/{{ http_host }}"
+    remote_src: yes
+    creates: "/var/www/{{ http_host }}/wordpress"
+
+- name: Set ownership
+  become: true
+  file:
+    name: "/var/www/{{ http_host }}"
+    state: directory
+    recurse: yes
+    owner: www-data
+    group: www-data
+
+- name: Set permissions for directories
+  become: true
+  shell: "/usr/bin/find /var/www/{{ http_host }}/wordpress/ -type d -exec chmod 750 {} \\;"
+
+- name: Set permissions for files
+  become: true
+  shell: "/usr/bin/find /var/www/{{ http_host }}/wordpress/ -type f -exec chmod 640 {} \\;"
+
+- name: Set up wp-config
+  become: true
+  template:
+    src: "templates/wp-config.php.j2"
+    dest: "/var/www/{{ http_host }}/wordpress/wp-config.php"
+

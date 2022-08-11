@@ -9,3 +9,19 @@
   remote_user: ubuntu
   roles:
     - mysql
+- name: Install wordpress
+  hosts: wordpress
+  remote_user: ubuntu
+  roles:
+    - wordpress
+- name: Install Gitlab
+  hosts: gitlab-server
+  remote_user: ubuntu
+  roles:
+    - gitlab
+- name: Install Gitlab runner
+  hosts: gitlab-runner
+  remote_user: ubuntu
+  become: true
+  roles:
+    - runner

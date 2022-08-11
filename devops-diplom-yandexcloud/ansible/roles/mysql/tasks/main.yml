@@ -90,6 +90,7 @@
   when:
     - mysql_replication_role == 'slave'
 
+
 - name: Ensure replication user exists on master.
   become: true
   mysql_user:
@@ -98,58 +99,117 @@
     password: "{{ mysql_replication_user_password }}"
     priv: "*.*:REPLICATION SLAVE,REPLICATION CLIENT"
     state: present
-  when: inventory_hostname == 'mysql-master'
-
-- name: Change the authentication plugin of MySQL root user to mysql_native_password
-  become: true
-  shell: mysql -e 'UPDATE mysql.user SET plugin="mysql_native_password"
-    WHERE user="{{ mysql_replication_user }}" AND host="%"'
-  when: inventory_hostname == 'mysql-master'
-- name: Flush Privileges
-  become: true
-  shell: mysql -e 'FLUSH PRIVILEGES'
-  when: inventory_hostname == 'mysql-master'
-
-- name: Restart mysql
-  become: true
-  service:
-    name: mysql
-    state: restarted
   when:
     - mysql_replication_role == 'master'
-
+    - mysql_replication_user is defined
+    - (mysql_replication_master | length) > 0
 
 - name: Check slave replication status.
   become: true
   mysql_replication:
     mode: getslave
+#    login_user: "{{ mysql_replication_user }}"
+#    login_password: "{{ mysql_replication_user_password }}"
   ignore_errors: true
   register: slave
-  when: inventory_hostname == 'mysql-slave'
+  when:
+    - mysql_replication_role == 'slave'
+    - (mysql_replication_master | length) > 0
 
 - name: Check master replication status.
   become: true
-  mysql_replication:
-    mode: getmaster
+  mysql_replication: mode=getmaster
   delegate_to: "{{ mysql_replication_master }}"
   register: master
-  when: inventory_hostname == 'mysql-slave'
-
+  when:
+    - (slave.Is_Slave is defined and not slave.Is_Slave) or (slave.Is_Slave is not defined and slave is failed)
+    - mysql_replication_role == 'slave'
+    - (mysql_replication_master | length) > 0
 
 - name: Configure replication on the slave.
   become: true
   mysql_replication:
     mode: changemaster
-    master_host: "{{ hostvars['mysql-master'].ansible_host }}"
+    master_host: "{{ mysql_replication_master }}"
     master_user: "{{ mysql_replication_user }}"
     master_password: "{{ mysql_replication_user_password }}"
     master_log_file: "{{ master.File }}"
     master_log_pos: "{{ master.Position }}"
   ignore_errors: true
-  when: inventory_hostname == 'mysql-slave'
-
+  when:
+    - (slave.Is_Slave is defined and not slave.Is_Slave) or (slave.Is_Slave is not defined and slave is failed)
+    - mysql_replication_role == 'slave'
+    - mysql_replication_user is defined
+    - (mysql_replication_master | length) > 0
 
 - name: Start replication.
-  mysql_replication: mode=startslave
-  when: inventory_hostname == 'mysql-slave'
   become: true
+  mysql_replication: mode=startslave
+  when:
+    - (slave.Is_Slave is defined and not slave.Is_Slave) or (slave.Is_Slave is not defined and slave is failed)
+    - mysql_replication_role == 'slave'
+    - (mysql_replication_master | length) > 0
+
+#- name: Проверяем существование replica_user на master.
+#  become: true
+#  mysql_user:
+#    name: "{{ mysql_replication_user }}"
+#    host: "%"
+#    password: "{{ mysql_replication_user_password }}"
+#    priv: "*.*:REPLICATION SLAVE,REPLICATION CLIENT"
+#    state: present
+#  when: inventory_hostname == 'mysql-master'
+
+#- name: Change the authentication plugin of MySQL root user to mysql_native_password
+#  become: true
+#  shell: mysql -e 'UPDATE mysql.user SET plugin="mysql_native_password"
+#    WHERE user="{{ mysql_replication_user }}" AND host="{{ hostvars['mysql-slave'].ansible_host }}"'
+#  when: inventory_hostname == 'mysql-master'
+#- name: Flush Privileges
+#  become: true
+#  shell: mysql -e 'FLUSH PRIVILEGES'
+#  when: inventory_hostname == 'mysql-master'
+
+#- name: Restart mysql
+#  become: true
+#  service:
+#    name: mysql
+#    state: restarted
+#  when:
+#    - mysql_replication_role == 'master'
+
+
+#- name: Check slave replication status.
+#  become: true
+#  mysql_replication:
+#    mode: getslave
+#  ignore_errors: true
+#  register: slave
+#  when: inventory_hostname == 'mysql-slave'
+#
+#- name: Check master replication status.
+#  become: true
+#  mysql_replication:
+#    mode: getmaster
+#  delegate_to: "{{ mysql_replication_master }}"
+#  register: master
+#  when: inventory_hostname == 'mysql-slave'
+#
+#
+#- name: Configure replication on the slave.
+#  become: true
+#  mysql_replication:
+#    mode: changemaster
+#    master_host: "{{ hostvars['mysql-master'].ansible_host }}"
+#    master_user: "{{ mysql_replication_user }}"
+#    master_password: "{{ mysql_replication_user_password }}"
+#    master_log_file: "{{ master.File }}"
+#    master_log_pos: "{{ master.Position }}"
+#  ignore_errors: true
+#  when: inventory_hostname == 'mysql-slave'
+#
+#
+#- name: Start replication.
+#  mysql_replication: mode=startslave
+#  when: inventory_hostname == 'mysql-slave'
+#  become: true

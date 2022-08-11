@@ -118,7 +118,7 @@ pligin@ubuntu:~/Desktop/devops-diplom-yandexcloud/terraform$ terraform workspace
 ```
 </details>
 
-В результате команды `terraform plan` и `terraform apply` отрабатывают без ошибок.
+В результате команды `terraform plan` и `terraform apply -auto-approve` отрабатывают без ошибок.
 <details>
 <summary>terraform plan</summary>
 
@@ -260,7 +260,7 @@ Apply complete! Resources: 3 added, 0 changed, 0 destroyed.
 В S3 bucket пишется состояние конфигурации `terraform`
 ![](IMG/tfstate.PNG)
 
-Команда `terraform destroy` уничтожает инфраструктуру:
+Команда `terraform destroy -auto-approve` уничтожает инфраструктуру:
 <details>
 <summary>terraform destroy</summary>
 
@@ -349,3 +349,92 @@ Destroy complete! Resources: 3 destroyed.
 В браузере можно открыть любой URL и увидеть ответ сервера (502 Bad Gateway). Также certbot сгенерировал сертификат:
 
 ![](IMG/site1.PNG)
+
+## 4 Установкф кластера MySQL
+
+У меня не получилось посредством Ansible настроить репликацию master и slave, поэтому настраивал репликацию в ручную.
+
+Для настройки репликации вручную запастил на сервере master команду `show master status` и запомнил параметры `File` и `Position`
+```commandline
+mysql> show master status;
++------------------+----------+--------------+------------------+-------------------+
+| File             | Position | Binlog_Do_DB | Binlog_Ignore_DB | Executed_Gtid_Set |
++------------------+----------+--------------+------------------+-------------------+
+| mysql-bin.000002 |      157 | wordpress    |                  |                   |
++------------------+----------+--------------+------------------+-------------------+
+1 row in set (0.00 sec)
+
+```
+На сервере slave для настройки репликации ввел команды
+
+```commandline
+# останавливаем реплику
+mysql - stop slave;
+
+# сьрасываем реплику
+mysql > reset slave;
+
+# настраиваем реплику заново с параметрами мастера
+mysql> CHANGE MASTER TO
+    -> MASTER_HOST='192.168.20.14',
+    -> MASTER_USER='replica_user',
+    -> MASTER_PASSWORD='repl1c@tPa$$w0rD',
+    -> MASTER_LOG_FILE='mysql-bin.000002',
+    -> MASTER_LOG_POS=157;
+Query OK, 0 rows affected, 8 warnings (0.06 sec)
+
+# стартуем реплику
+mysql> start slave;
+```
+
+Далее провожу окончательную настройку в web-интерфейсе сайта wordpress, и проверяю создаются ли таблицы на обоих серверах mysql.
+
+До настройки:
+
+```commandline
+ubuntu@mysql-master:~$ sudo mysql
+Welcome to the MySQL monitor.  Commands end with ; or \g.
+Your MySQL connection id is 99
+Server version: 8.0.30-0ubuntu0.20.04.2 (Ubuntu)
+
+Copyright (c) 2000, 2022, Oracle and/or its affiliates.
+
+Oracle is a registered trademark of Oracle Corporation and/or its
+affiliates. Other names may be trademarks of their respective
+owners.
+
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+mysql> use wordpress;
+Database changed
+mysql> show tables
+    -> ;
+Empty set (0.01 sec)
+
+```
+После настройки
+## 5
+
+Регистрируем вручную gitlab-runner
+```commandline
+ubuntu@gitlab-runner:~$ sudo gitlab-runner register
+Runtime platform                                    arch=amd64 os=linux pid=1351 revision=32fc1585 version=15.2.1
+Running in system-mode.                            
+                                                   
+Enter the GitLab instance URL (for example, https://gitlab.com/):
+http://gitlab
+Enter the registration token:
+yDC7rZFwEyTEtTxhzDQQ                              
+Enter a description for the runner:
+[gitlab-runner]: my runner
+Enter tags for the runner (comma-separated):
+wp
+Enter optional maintenance note for the runner:
+opt
+Registering runner... succeeded                     runner=yDC7rZFw
+Enter an executor: shell, ssh, virtualbox, kubernetes, custom, docker, parallels, docker-ssh, docker+machine, docker-ssh+machine:
+shell
+Runner registered successfully. Feel free to start it, but if it's running already the config should be automatically reloaded!
+ 
+Configuration (with the authentication token) was saved in "/etc/gitlab-runner/config.toml" 
+```

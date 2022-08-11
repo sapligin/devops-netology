@@ -1,2 +1,15 @@
 ---
-#mysql_root_password: "rootPass"
+#mysql_dependencies:
+#  - mysql-server
+#  - mysql-client
+#  - python3-mysqldb
+#  - libmysqlclient-dev
+mysql_root_password: r00tPa$$w0rD
+db_user: wordpress
+db_pass: wordpress
+db_name: wordpress
+mysql_replication_master: mysql-master
+mysql_replication_user: replica_user
+mysql_replication_user_password: repl1c@tPa$$w0rD
+
+

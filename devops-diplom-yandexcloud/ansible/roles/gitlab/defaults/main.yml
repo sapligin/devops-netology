@@ -1,0 +1,23 @@
+---
+# General config.
+gitlab_domain: gitlab.sapligin.ru
+gitlab_external_url: "http://{{ gitlab_domain }}/"
+gitlab_edition: "gitlab-ce"
+gitlab_config_template: "gitlab.rb.j2"
+gitlab_repository_installation_script_url: "https://packages.gitlab.com/install/repositories/gitlab/{{ gitlab_edition }}/script.deb.sh"
+tf_monitoring_server_ip: "{{ hostvars['nginx'].ansible_host }}"
+install_gitlab_le_enabled: "false"
+
+gitlab_dependencies:
+  - postfix
+  - curl
+  - tzdata
+
+gitlab_time_zone: "UTC"
+gitlab_default_theme: '2'
+
+# GitLab root password after install
+gitlab_root_password: r00tPa$$w0rD
+
+# GitLab runner token after install
+gitlab_runner_token: ""

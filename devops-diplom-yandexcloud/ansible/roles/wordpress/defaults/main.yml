@@ -1,0 +1,16 @@
+---
+# defaults file for wordpress
+#System Settings
+php_modules: [ 'php-curl', 'php-gd', 'php-mbstring', 'php-xml', 'php-xmlrpc', 'php-soap', 'php-intl', 'php-zip' ]
+app_packages: [ 'apache2', 'python3-pymysql', 'php', 'php-mysql', 'libapache2-mod-php', 'git' ]
+
+#HTTP Settings
+http_host: "sapligin.ru"
+http_port: "80"
+
+#db vars
+mysql_root_password: "r00tPa$$w0rD"
+db_host: "mysql-master"
+mysql_password: "wordpress"
+mysql_user: "wordpress"
+mysql_db: "wordpress"
