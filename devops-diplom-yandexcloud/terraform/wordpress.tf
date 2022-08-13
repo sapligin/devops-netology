@@ -1,7 +1,7 @@
 resource "yandex_compute_instance" "wordpress" {
   name                      = "wordpress"
   zone                      = "ru-central1-b"
-  hostname                  = "wordpress"
+  hostname                  = "app.sapligin.ru"
   allow_stopping_for_update = true
 
   resources {

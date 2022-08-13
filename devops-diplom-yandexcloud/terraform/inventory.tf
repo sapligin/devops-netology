@@ -10,12 +10,12 @@ resource "local_file" "inventory" {
 
     mysql-group:
       hosts:
-        mysql-master:
+        db01:
           ansible_ssh_common_args: '-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ProxyCommand="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -W %h:%p -q ${var.yandex_ubuntu_user}@${yandex_compute_instance.nginx.network_interface.0.nat_ip_address}"'
           ansible_user: ${var.yandex_ubuntu_user}
           ansible_host: ${yandex_compute_instance.mysql-master.network_interface.0.ip_address}
           mysql_replication_role: 'master'
-        mysql-slave:
+        db02:
           ansible_ssh_common_args: '-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ProxyCommand="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -W %h:%p -q ${var.yandex_ubuntu_user}@${yandex_compute_instance.nginx.network_interface.0.nat_ip_address}"'
           ansible_user: ${var.yandex_ubuntu_user}
           ansible_host: ${yandex_compute_instance.mysql-slave.network_interface.0.ip_address}
@@ -23,18 +23,18 @@ resource "local_file" "inventory" {
 
     wordpress-group:
       hosts:
-        wordpress:
+        app:
           ansible_ssh_common_args: '-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ProxyCommand="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -W %h:%p -q ${var.yandex_ubuntu_user}@${yandex_compute_instance.nginx.network_interface.0.nat_ip_address}"'
           ansible_user: ${var.yandex_ubuntu_user}
           ansible_host: ${yandex_compute_instance.wordpress.network_interface.0.ip_address}
 
     gitlab-group:
       hosts:
-        gitlab-server:
+        gitlab:
           ansible_ssh_common_args: '-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ProxyCommand="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -W %h:%p -q ${var.yandex_ubuntu_user}@${yandex_compute_instance.nginx.network_interface.0.nat_ip_address}"'
           ansible_user: ${var.yandex_ubuntu_user}
           ansible_host: ${yandex_compute_instance.gitlab-server.network_interface.0.ip_address}
-        gitlab-runner:
+        runner:
           ansible_ssh_common_args: '-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ProxyCommand="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -W %h:%p -q ${var.yandex_ubuntu_user}@${yandex_compute_instance.nginx.network_interface.0.nat_ip_address}"'
           ansible_user: ${var.yandex_ubuntu_user}
           ansible_host: ${yandex_compute_instance.gitlab-runner.network_interface.0.ip_address}

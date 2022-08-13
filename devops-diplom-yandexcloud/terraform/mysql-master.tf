@@ -1,7 +1,7 @@
 resource "yandex_compute_instance" "mysql-master" {
   name                      = "mysql-master"
   zone                      = "ru-central1-b"
-  hostname                  = "mysql-master"
+  hostname                  = "db01.sapligin.ru"
   allow_stopping_for_update = true
 
   resources {

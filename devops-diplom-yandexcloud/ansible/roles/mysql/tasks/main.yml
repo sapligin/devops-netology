@@ -95,7 +95,7 @@
   become: true
   mysql_user:
     name: "{{ mysql_replication_user }}"
-    host: "%"
+    host: "{{ hostvars['db02'].ansible_host }}"
     password: "{{ mysql_replication_user_password }}"
     priv: "*.*:REPLICATION SLAVE,REPLICATION CLIENT"
     state: present

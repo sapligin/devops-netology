@@ -1,7 +1,7 @@
 resource "yandex_compute_instance" "gitlab-runner" {
   name                      = "gitlab-runner"
   zone                      = "ru-central1-b"
-  hostname                  = "gitlab-runner"
+  hostname                  = "runner.sapligin.ru"
   allow_stopping_for_update = true
 
   resources {

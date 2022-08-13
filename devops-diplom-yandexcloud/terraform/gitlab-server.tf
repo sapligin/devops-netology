@@ -1,13 +1,13 @@
 resource "yandex_compute_instance" "gitlab-server" {
   name                      = "gitlab-server"
   zone                      = "ru-central1-b"
-  hostname                  = "gitlab-server"
+  hostname                  = "gitlab.sapligin.ru"
   allow_stopping_for_update = true
 
   resources {
     cores  = 4
     core_fraction = 20
-    memory = 4
+    memory = 8
   }
 
   scheduling_policy {

@@ -83,7 +83,7 @@
 - name: Update hosts gitlab
   lineinfile:
     path: /etc/hosts
-    line: "{{ hostvars['gitlab-server'].ansible_host }} gitlab gitlab.{{ domain }}"
+    line: "{{ hostvars['gitlab'].ansible_host }} gitlab gitlab.{{ domain }}"
 
 - name: Download the binary for your system
   become: true
@@ -95,11 +95,41 @@
 # Give it permission to execute
 # sudo chmod +x /usr/local/bin/gitlab-runner
 
-- name: Create a GitLab Runner user
-  command: "sudo useradd --comment 'GitLab Runner' --create-home gitlab-runner --shell /bin/bash"
+#- name: Create a GitLab Runner user
+#  command: "sudo useradd --comment 'GitLab Runner' --create-home gitlab-runner --shell /bin/bash"
 
 - name: Install GitLab Runner
-  command: "sudo gitlab-runner install --user=gitlab-runner --working-directory=/home/gitlab-runner"
+  command: "sudo gitlab-runner install --user=ubuntu --working-directory=/home/ubuntu"
+
+#- name: Add gitlab-runner user to sudoers
+#  become: true
+#  user:
+#    name: gitlab-runner
+#    groups: sudo
+#    append: yes
+#    state: present
+#
+- name: Allow gitlab-runner user to have passwordless sudo
+  become: true
+  lineinfile:
+    dest: /etc/sudoers
+    state: present
+    regexp: '^ubuntu'
+    line: 'ubuntu ALL=(ALL) NOPASSWD: ALL'
+    validate: 'visudo -cf %s'
+
+- name: modify ssh StrictHostKeyChecking
+  become: true
+  lineinfile:
+    path: /etc/ssh/ssh_config
+    line: '    StrictHostKeyChecking no'
+
+#- name: Create a 2048-bit SSH key for user gitlab-runner in ~gitlab-runner/.ssh/id_rsa
+#  user:
+#    name: gitlab-runner
+#    generate_ssh_key: yes
+#    ssh_key_bits: 2048
+#    ssh_key_file: .ssh/id_rsa
 
 - name: Run GitLab Runner as a service
   command: "sudo gitlab-runner start"

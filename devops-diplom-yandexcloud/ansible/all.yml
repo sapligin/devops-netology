@@ -4,24 +4,41 @@
   remote_user: ubuntu
   roles:
     - nginx
+
 - name: Install MySQL
   hosts: mysql-group
   remote_user: ubuntu
   roles:
     - mysql
+
 - name: Install wordpress
-  hosts: wordpress
+  hosts: app
   remote_user: ubuntu
   roles:
     - wordpress
-- name: Install Gitlab
-  hosts: gitlab-server
-  remote_user: ubuntu
-  roles:
-    - gitlab
-- name: Install Gitlab runner
-  hosts: gitlab-runner
-  remote_user: ubuntu
+
+#- name: Install Gitlab
+#  hosts: gitlab
+#  remote_user: ubuntu
+#  roles:
+#    - gitlab
+#
+#- name: Install Gitlab runner
+#  hosts: runner
+#  remote_user: ubuntu
+#  become: true
+#  roles:
+#    - runner
+
+- name: Install monitoring tools
+  hosts: monitoring
   become: true
   roles:
-    - runner
+   - prometheus
+   - grafana
+
+- name: Install nodeexporter
+  hosts: all
+  become: true
+  roles:
+   - nodeexporter

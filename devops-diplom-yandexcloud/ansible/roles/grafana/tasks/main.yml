@@ -1,0 +1,39 @@
+---
+- name: Import Grafana Apt Key
+  apt_key:
+    url: https://packages.grafana.com/gpg.key
+    state: present
+
+- name: Add APT Repository
+  apt_repository:
+    repo: deb https://packages.grafana.com/oss/deb stable main
+    state: present
+
+- name: Install Grafana on Debian Family
+  apt:
+    name: grafana
+    state: present
+
+
+- name: Set Prometheus datasource
+  copy:
+    src: files/prometheus.yml
+    dest: /etc/grafana/provisioning/datasources/prometheus.yml
+    owner: grafana
+    group: grafana
+
+- name: Set Prometheus dashboard
+  copy:
+    src: files/node-exporter-full.json
+    dest: /etc/grafana/provisioning/dashboards/node-exporter-full.json
+    owner: grafana
+    group: grafana
+
+- name: Set Prometheus dashboard
+  copy:
+    src: files/dashboard.yml
+    dest: /etc/grafana/provisioning/dashboards/dashboard.yml
+    owner: grafana
+    group: grafana
+  notify:
+    - grafana systemd

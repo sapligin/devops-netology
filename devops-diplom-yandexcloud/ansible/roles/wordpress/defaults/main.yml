@@ -10,7 +10,7 @@ http_port: "80"
 
 #db vars
 mysql_root_password: "r00tPa$$w0rD"
-db_host: "mysql-master"
+db_host: "db01"
 mysql_password: "wordpress"
 mysql_user: "wordpress"
 mysql_db: "wordpress"
