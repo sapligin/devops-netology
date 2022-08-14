@@ -5,6 +5,7 @@
 В YC создан сервисный аккаунт `my-robot` с правами `editor`
 
 Создан S3 bucket в аккаунте YC
+
 ![](IMG/1.PNG)
 
 Пишем конфигурацию `terraform` с подсетями:
@@ -332,6 +333,8 @@ Destroy complete! Resources: 3 destroyed.
 ## 3. Установка Nginx и LetsEncrypt
 Написана роль для установки Nginx и LetsEncrypt.
 
+В Яндекс.Облаке зарезервирован внешний IP-адрес для сервера c Nginx (51.250.12.153)
+
 В доменной зоне настроены все A-записи на внешний адрес сервера c Nginx (51.250.12.153)
 
 ![](IMG/dns.PNG)
@@ -590,7 +593,34 @@ Configuration (with the authentication token) was saved in "/etc/gitlab-runner/c
 ```
 ![](IMG/runner.PNG)
 
-Деплой на сервер app.sapligin.ru при добавлении тегов идет с помощью установленного и настроенного `rync`
+Деплой на сервер app.sapligin.ru при добавлении тегов идет с помощью установленного и настроенного `rsync` на сервере `app` и сервере `runner`.
+
+Написан pipeline для синхронизации репозитория с папкой сайта на сервере `app.sapligin.ru`
+
+![](IMG/pipeline.PNG)
+
+Проверяем работу доставки в среду эксплуатации:
+
+Создаем в репозитории файл `test.txt`
+
+![](IMG/file.PNG)
+
+Создаем в репозитори тэг `v1.0.0`
+
+![](IMG/tag.PNG)
+
+Видим, что пайплайн отработал без ошибок.
+
+![](IMG/pipeline_ok.PNG)
+
+Монитор задачи деплоя
+
+![](IMG/job.PNG)
+
+На сервере app.sapligin.ru появился файл `test.txt`
+
+![](IMG/app.PNG)
+
 ## 7. Установка Prometheus, Alert Manager, Node Exporter и Grafana
 Prometheus и метрики
 
