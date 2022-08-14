@@ -1,135 +1,70 @@
-##---
-### tasks file for runner
-##
-##- name: Install git
-##  package:
-##    name: "git"
-##    state: present
-##    update_cache: yes
-##
-##- name: Download the binary for your system
-##  command: "curl -L --output /usr/local/bin/gitlab-runner https://gitlab-runner-downloads.s3.amazonaws.com/latest/binaries/gitlab-runner-linux-amd64"
-##
-##- name: Give it permission to execute
-##  command: "chmod +x /usr/local/bin/gitlab-runner"
-##
-##- name: Install GitLab Runner
-##  command: "useradd --comment 'GitLab Runner' --create-home runner --shell /bin/bash"
-##
-##- name: Install and run as a service
-##  command: "gitlab-runner install --user=runner --working-directory=/home/runner"
-##
-##- name: Start runner
-##  command: "gitlab-runner start"
-##
-###- name: Register runner
-###  shell: gitlab-runner register \
-###    --non-interactive \
-###    --url "http://gitlab.{{ domain }}/" \
-###    --registration-token "{{ gitlab_runner_token }}" \
-###    --description "codechecker" \
-###    --executor "shell"
-##
-##- name: Create directory for runner ssh keys
-##  file:
-##    name: /home/runner/.ssh/
-##    state: directory
-##
-##- name: Create a 2048-bit SSH key for user gitlab-runner in ~gitlab-runner/.ssh/id_rsa
-##  user:
-##    name: runner
-##    generate_ssh_key: yes
-##    ssh_key_bits: 2048
-##    ssh_key_file: .ssh/id_rsa
-##
-##- name: move .bash_logout
-##  shell: >
-##    rm /home/runner/.bash_logout
-##
-#
-#
-#---
-## tasks file for install-gitlab-runner
-#- name: Gitlab-runner - Install dependencies first
-#  become: true
-#  apt:
-#    name:
-#      - curl
-#      - openssh-server
-#      - ca-certificates
-#      - tzdata
-#      - perl
-##      - postfix
-#    state: present
-#    update_cache: true
-#
-#- name: Gitlab-runner - Get package
-#  become: true
-#  get_url:
-#    url: https://gitlab-runner-downloads.s3.amazonaws.com/latest/deb/gitlab-runner_amd64.deb
-#    dest: /tmp/gitlab-runner.deb
-#    mode: "0666"
-##  environment:
-##    http_proxy: 'http://{{ nginx_local_ip }}:3128'
-##    https_proxy: 'http://{{ nginx_local_ip }}:3128'
-#
-#- name: Gitlab-runner - Install a .deb package
-#  become: true
-#  apt:
-#    deb: /tmp/gitlab-runner.deb
-##  timeout: 600
-#  ignore_errors: true
+---
+# tasks file for install-gitlab-runner
+- name: Gitlab-runner - Install dependencies first
+  become: true
+  apt:
+    name:
+      - curl
+      - openssh-server
+      - ca-certificates
+      - tzdata
+      - perl
+#      - postfix
+    state: present
+    update_cache: true
 
-- name: Update hosts gitlab
-  lineinfile:
-    path: /etc/hosts
-    line: "{{ hostvars['gitlab'].ansible_host }} gitlab gitlab.{{ domain }}"
-
-- name: Download the binary for your system
+- name: Gitlab-runner - Get package
   become: true
   get_url:
-    url: https://gitlab-runner-downloads.s3.amazonaws.com/latest/binaries/gitlab-runner-linux-amd64
-    dest: /usr/local/bin/gitlab-runner
-    mode: +x
+    url: https://gitlab-runner-downloads.s3.amazonaws.com/latest/deb/gitlab-runner_amd64.deb
+    dest: /tmp/gitlab-runner.deb
+    mode: "0666"
+#  environment:
+#    http_proxy: 'http://{{ nginx_local_ip }}:3128'
+#    https_proxy: 'http://{{ nginx_local_ip }}:3128'
 
-# Give it permission to execute
-# sudo chmod +x /usr/local/bin/gitlab-runner
+- name: Gitlab-runner - Install a .deb package
+  become: true
+  apt:
+    deb: /tmp/gitlab-runner.deb
+#  timeout: 600
+  ignore_errors: true
 
-#- name: Create a GitLab Runner user
-#  command: "sudo useradd --comment 'GitLab Runner' --create-home gitlab-runner --shell /bin/bash"
-
-- name: Install GitLab Runner
-  command: "sudo gitlab-runner install --user=ubuntu --working-directory=/home/ubuntu"
-
-#- name: Add gitlab-runner user to sudoers
+#- name: Gitlab-runner - register a runner to Gitlab
 #  become: true
-#  user:
-#    name: gitlab-runner
-#    groups: sudo
-#    append: yes
-#    state: present
-#
-- name: Allow gitlab-runner user to have passwordless sudo
+#  ansible.builtin.command: 'gitlab-runner register --non-interactive --url "http://gitlab.sapligin.ru/" --registration-token "{{gitlab_runner_token}}" --executor "shell" --docker-image alpine:latest --description "shell-runner" --maintenance-note "Free-form maintainer notes about this runner" --tag-list "shell" --run-untagged="true" --locked="false" --access-level="not_protected"'
+##  args:
+##    chdir: /etc/gitlab/
+#  ignore_errors: true
+
+- name: Gitlab runner - Copy - private key to runner server
+  copy:
+    src: ~/.ssh/id_rsa
+    dest: /tmp/id_rsa
+    owner: ubuntu
+    group: ubuntu
+    mode: u+rw,g+rw,o+rw
+    backup: yes
+- name: Gitlab runner - Copy - ssh config to reduce strict restrictions on a runner host
+  copy:
+    src: files/config.ssh
+    dest: /home/ubuntu/.ssh/config
+    owner: ubuntu
+    group: ubuntu
+    mode: u+rw,g+rw,o+r
+    backup: yes
+
+- name: Установка Rsync
   become: true
-  lineinfile:
-    dest: /etc/sudoers
+  apt:
+    name: rsync
     state: present
-    regexp: '^ubuntu'
-    line: 'ubuntu ALL=(ALL) NOPASSWD: ALL'
-    validate: 'visudo -cf %s'
+    update_cache: yes
 
-- name: modify ssh StrictHostKeyChecking
+- name: Копируем файл пароля rsync
   become: true
-  lineinfile:
-    path: /etc/ssh/ssh_config
-    line: '    StrictHostKeyChecking no'
-
-#- name: Create a 2048-bit SSH key for user gitlab-runner in ~gitlab-runner/.ssh/id_rsa
-#  user:
-#    name: gitlab-runner
-#    generate_ssh_key: yes
-#    ssh_key_bits: 2048
-#    ssh_key_file: .ssh/id_rsa
-
-- name: Run GitLab Runner as a service
-  command: "sudo gitlab-runner start"
+  template:
+    src: "templates/rsyncd.scrt.j2"
+    dest: "/etc/rsyncd.scrt"
+    mode: 0640
+    owner: gitlab-runner
