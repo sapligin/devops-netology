@@ -1,53 +1,33 @@
 global:
-  scrape_interval:     10s
-scrape_configs:
-  - job_name: 'prometheus'
-    static_configs:
-    - targets: ['localhost:9090']
-  - job_name: 'nginx'
-    scrape_interval: 10s
-    static_configs:
-    - targets: ['{{ hostvars['nginx'].ansible_host }}:9100']
-  - job_name: 'db01'
-    scrape_interval: 10s
-    static_configs:
-    - targets: ['{{ hostvars['db01'].ansible_host }}:9100']
-  - job_name: 'db02'
-    scrape_interval: 10s
-    static_configs:
-    - targets: ['{{ hostvars['db02'].ansible_host }}:9100']
-  - job_name: 'app'
-    scrape_interval: 10s
-    static_configs:
-    - targets: ['{{ hostvars['app'].ansible_host }}:9100']
-  - job_name: 'gitlab-server'
-    scrape_interval: 10s
-    static_configs:
-    - targets: ['{{ hostvars['gitlab'].ansible_host }}:9100']
-  - job_name: 'gitlab-runner'
-    scrape_interval: 10s
-    static_configs:
-    - targets: ['{{ hostvars['runner'].ansible_host }}:9100']
-  - job_name: 'monitoring'
-    scrape_interval: 10s
-    static_configs:
-    - targets: ['{{ hostvars['monitoring'].ansible_host }}:9100']
-  - job_name: 'db01'
-    static_configs:
-      - targets: ['{{ hostvars['db01'].ansible_host }}:9104']
-        labels:
-          alias: db01
-  - job_name: 'db02'
-    static_configs:
-      - targets: ['{{ hostvars['db02'].ansible_host }}:9104']
-        labels:
-          alias: db02
+  scrape_interval: 15s # Set the scrape interval to every 15 seconds. Default is every 1 minute.
+  evaluation_interval: 15s # Evaluate rules every 15 seconds. The default is every 1 minute.
+  # scrape_timeout is set to the global default (10s).
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ["localhost:9093"]
+
+
+# Load rules once and periodically evaluate them according to the global 'evaluation_interval'.
 rule_files:
   - "rules.yml"
 
-alerting:
-  alertmanagers:
-  - scheme: http
+scrape_configs:
+
+  - job_name: "prometheus"
     static_configs:
-    - targets:
-      - 'localhost:9093'
+      - targets: ["localhost:9090"]
+
+  - job_name: "node_exporter"
+    scrape_interval: 15s
+    static_configs:
+      - targets:
+        - localhost:9100
+        - gitlab:9100
+        - runner:9100
+        - nginx:9100
+        - app:9100
+        - db01:9100
+        - db02:9100

@@ -114,6 +114,15 @@
     path: /tmp/node_exporter-{{ node_exporter_version }}.linux-amd64/
     state: absent
 
+- name: copy hosts file
+  template:
+    src: hosts.j2
+    dest: /etc/hosts
+    owner: root
+    group: root
+    mode: 0644
+  notify: reload_daemon_and_restart_node_exporter
+
 - name: install service
   template:
     src: node_exporter.service.j2

@@ -113,3 +113,46 @@
     src: "templates/wp-config.php.j2"
     dest: "/var/www/{{ http_host }}/wordpress/wp-config.php"
 
+- name: Установка Rsync
+  become: true
+  apt:
+    name: rsync
+    state: present
+    update_cache: yes
+
+- name: Включаем RSYNC_ENABLE
+  lineinfile:
+    dest: /etc/default/rsync
+    state: present
+    regexp: '^RSYNC_ENABLE'
+    line: 'RSYNC_ENABLE=true'
+
+- name: Enable rsync
+  become: yes
+  ansible.builtin.service:
+    name: rsync
+    enabled: yes
+
+- name: Start rsync
+  ansible.builtin.service:
+    name: rsync
+    state: started
+
+- name: Копируем конфиг rsync
+  become: true
+  template:
+    src: "templates/rsyncd.conf.j2"
+    dest: "/etc/rsyncd.conf"
+    mode: 0644
+
+- name: Копируем файл пароля rsync
+  become: true
+  template:
+    src: "templates/rsyncd.scrt.j2"
+    dest: "/etc/rsyncd.scrt"
+    mode: 0600
+
+- name: Restart rsync
+  ansible.builtin.service:
+    name: rsync
+    state: restarted

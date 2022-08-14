@@ -17,18 +17,18 @@
   roles:
     - wordpress
 
-#- name: Install Gitlab
-#  hosts: gitlab
-#  remote_user: ubuntu
-#  roles:
-#    - gitlab
-#
-#- name: Install Gitlab runner
-#  hosts: runner
-#  remote_user: ubuntu
-#  become: true
-#  roles:
-#    - runner
+- name: Install Gitlab
+  hosts: gitlab
+  remote_user: ubuntu
+  roles:
+    - gitlab
+
+- name: Install Gitlab runner
+  hosts: runner
+  remote_user: ubuntu
+  become: true
+  roles:
+    - runner
 
 - name: Install monitoring tools
   hosts: monitoring

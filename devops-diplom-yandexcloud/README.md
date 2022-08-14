@@ -186,7 +186,7 @@ you run "terraform apply" now.
 <summary>terraform apply</summary>
 
 ```commandline
-pligin@ubuntu:~/Desktop/devops-diplom-yandexcloud/terraform$ terraform apply 
+pligin@ubuntu:~/Desktop/devops-diplom-yandexcloud/terraform$ terraform apply -auto-approve
 
 Terraform used the selected providers to generate the following execution plan. Resource actions are indicated with
 the following symbols:
@@ -237,12 +237,6 @@ Terraform will perform the following actions:
 
 Plan: 3 to add, 0 to change, 0 to destroy.
 
-Do you want to perform these actions in workspace "stage"?
-  Terraform will perform the actions described above.
-  Only 'yes' will be accepted to approve.
-
-  Enter a value: yes
-
 yandex_vpc_network.network: Creating...
 yandex_vpc_network.network: Creation complete after 1s [id=enp7vdqdg0rr5ogq1qdm]
 yandex_vpc_subnet.private-subnet: Creating...
@@ -255,12 +249,14 @@ Apply complete! Resources: 3 added, 0 changed, 0 destroyed.
 </details>
 
 В аккаунте YC создаются подсети:
+
 ![](IMG/subnets.PNG)
 
 В S3 bucket пишется состояние конфигурации `terraform`
+
 ![](IMG/tfstate.PNG)
 
-Команда `terraform destroy -auto-approve` уничтожает инфраструктуру:
+Команда `terraform destroy -auto-approve` уничтожает инфраструктуру без дополнительных запросов:
 <details>
 <summary>terraform destroy</summary>
 
@@ -321,12 +317,6 @@ Terraform will perform the following actions:
 
 Plan: 0 to add, 0 to change, 3 to destroy.
 
-Do you really want to destroy all resources in workspace "stage"?
-  Terraform will destroy all your managed infrastructure, as shown above.
-  There is no undo. Only 'yes' will be accepted to confirm.
-
-  Enter a value: yes
-
 yandex_vpc_subnet.private-subnet: Destroying... [id=e9bdki9s6ujhht8olife]
 yandex_vpc_subnet.local-subnet: Destroying... [id=e2ltokvn53eck93mara9]
 yandex_vpc_subnet.private-subnet: Destruction complete after 2s
@@ -355,6 +345,9 @@ Destroy complete! Resources: 3 destroyed.
 У меня не получилось посредством Ansible настроить репликацию master и slave, так как в модуле `mysql_replication` не предусмотрен параметр `GET_MASTER_PUBLIC_KEY` для безопасной аутентификации. Поэтому настраивал репликацию в ручную.
 
 Для настройки репликации вручную запастил на сервере master команду `show master status` и запомнил параметры `File` и `Position`
+<details>
+<summary>show master status</summary>
+
 ```commandline
 mysql> show master status;
 +------------------+----------+--------------+------------------+-------------------+
@@ -365,7 +358,11 @@ mysql> show master status;
 1 row in set (0.00 sec)
 
 ```
-На сервере slave для настройки репликации ввел команды
+</details>
+На сервере db02.sapligin.ru для настройки репликации ввел команды
+
+<details>
+<summary>Настройка реплики на сервере db02.sapligin.ru</summary>
 
 ```commandline
 # останавливаем реплику
@@ -387,7 +384,11 @@ Query OK, 0 rows affected, 8 warnings (0.06 sec)
 # стартуем реплику
 mysql> start slave;
 ```
-Проверяем работу сервера реплики:
+</details>
+
+<details>
+<summary>Проверяем работу сервера реплики:</summary>
+
 ```commandline
 mysql> show slave status \G;
 *************************** 1. row ***************************
@@ -453,12 +454,15 @@ Master_SSL_Verify_Server_Cert: No
             Network_Namespace: 
 1 row in set, 1 warning (0.01 sec)
 ```
+</details>
+
 Далее провожу окончательную настройку в web-интерфейсе сайта wordpress, и проверяю создаются ли таблицы на обоих серверах mysql.
 
-До настройки:
+<details>
+<summary>До настройки:</summary>
 
 ```commandline
-ubuntu@mysql-master:~$ sudo mysql
+ubuntu@db01:~$ sudo mysql
 Welcome to the MySQL monitor.  Commands end with ; or \g.
 Your MySQL connection id is 99
 Server version: 8.0.30-0ubuntu0.20.04.2 (Ubuntu)
@@ -479,15 +483,19 @@ Empty set (0.01 sec)
 
 ```
 ```commandline
-ubuntu@mysql-slave:~$ sudo mysql
+ubuntu@db02:~$ sudo mysql
 mysql> use wordpress
 Database changed
 mysql> show tables;
 Empty set (0.01 sec)
 ```
-После настройки
+</details>
+
+<details>
+<summary>После настройки</summary>
+
 ```commandline
-ubuntu@mysql-master:~$ sudo mysql
+ubuntu@db01:~$ sudo mysql
 mysql> use wordpress;
 Reading table information for completion of table and column names
 You can turn off this feature to get a quicker startup with -A
@@ -517,7 +525,7 @@ mysql> show tables
 Сервер db02
 ```commandline
 ```commandline
-ubuntu@mysql-slave:~$ sudo mysql
+ubuntu@db02:~$ sudo mysql
 mysql> use wordpress;
 Reading table information for completion of table and column names
 You can turn off this feature to get a quicker startup with -A
@@ -544,29 +552,54 @@ mysql> show tables
 12 rows in set (0.00 sec)
 
 ```
-```
-## 5
+</details>
+
+## 5. Установка Wordpress
+Написана роль для установки Wordpress
+
+![](IMG/wordpress.PNG)
+
+## 6. Установка Gitlab CE и Gitlab Runner
+
+Написаны роли для установки Gitlab CE и gitlab-runner.
+
+![](IMG/gitlab.PNG)
 
 Регистрируем вручную gitlab-runner
 ```commandline
-ubuntu@gitlab-runner:~$ sudo gitlab-runner register
-Runtime platform                                    arch=amd64 os=linux pid=1351 revision=32fc1585 version=15.2.1
+ubuntu@runner:~$ sudo gitlab-runner register
+Runtime platform                                    arch=amd64 os=linux pid=1203 revision=32fc1585 version=15.2.1
 Running in system-mode.                            
                                                    
 Enter the GitLab instance URL (for example, https://gitlab.com/):
-http://gitlab
+http://gitlab.sapligin.ru
 Enter the registration token:
-yDC7rZFwEyTEtTxhzDQQ                              
+GR1348941RS9m2j1dJeCBwxQKmyoA
 Enter a description for the runner:
-[gitlab-runner]: my runner
+[runner]: my runner
 Enter tags for the runner (comma-separated):
-wp
+v1.0.0,v1.0.1,v1.0.2
 Enter optional maintenance note for the runner:
-opt
-Registering runner... succeeded                     runner=yDC7rZFw
-Enter an executor: shell, ssh, virtualbox, kubernetes, custom, docker, parallels, docker-ssh, docker+machine, docker-ssh+machine:
+
+Registering runner... succeeded                     runner=GR1348941RS9m2j1d
+Enter an executor: docker, parallels, docker+machine, docker-ssh+machine, kubernetes, custom, shell, ssh, virtualbox, docker-ssh:
 shell
 Runner registered successfully. Feel free to start it, but if it's running already the config should be automatically reloaded!
  
 Configuration (with the authentication token) was saved in "/etc/gitlab-runner/config.toml" 
 ```
+![](IMG/runner.PNG)
+
+Деплой на сервер app.sapligin.ru при добавлении тегов идет с помощью установленного и настроенного `rync`
+## 7. Установка Prometheus, Alert Manager, Node Exporter и Grafana
+Prometheus и метрики
+
+![](IMG/prometheus.PNG)
+
+Dashboard Grafana
+
+![](IMG/grafana.PNG)
+
+При выключении хостов Alertmanager сигнализирует об этом
+
+![](IMG/alertmanager.PNG)
