@@ -36,7 +36,7 @@
 
 - name: Запрашиваем сертификаты
   become: true
-  command: "certbot certonly --test-cert --agree-tos --no-eff-email -q --email sa.pligin@gmail.com -d sapligin.ru -d www.sapligin.ru -d alertmanager.sapligin.ru -d gitlab.sapligin.ru -d grafana.sapligin.ru -d prometheus.sapligin.ru"
+  command: "certbot certonly --agree-tos --no-eff-email -q --email sa.pligin@gmail.com -d sapligin.ru -d www.sapligin.ru -d alertmanager.sapligin.ru -d gitlab.sapligin.ru -d grafana.sapligin.ru -d prometheus.sapligin.ru"
 
 - name: Копируем конфиги nginx
   become: true
